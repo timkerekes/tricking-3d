@@ -1,16 +1,16 @@
 // src/server/trpc/router/_app.ts
 import { router } from "../trpc";
-import { authRouter } from "./auth";
 import { sessionsummariesRouter } from "./sessionsummaries";
 import { userRouter } from "./user";
 import { tricksRouter } from "./trick";
 import { transitionsRouter } from "./transitions";
 import { comboRouter } from "./combos";
 import { debateRouter } from "./debates";
+import { animationRouter } from "./animations";
 
 export const appRouter = router({
-  auth: authRouter,
   userDB: userRouter,
+  animations: animationRouter,
   combos: comboRouter,
   trick: tricksRouter,
   transition: transitionsRouter,

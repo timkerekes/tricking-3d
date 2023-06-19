@@ -1,5 +1,5 @@
 import { trpc } from "@utils/trpc";
-import React from "react";
+import React, { useState } from "react";
 import { FaCheck, FaCircle } from "react-icons/fa";
 import useGetCombos from "../../api/useGetCombos";
 import useGetTricks, { useGetTrickPoints } from "../../api/useGetTricks";
@@ -7,16 +7,25 @@ import DataListCommandBar from "../DataListCommandBar";
 import MakeNewTrickModal from "./sessionreview/MakeNewTrickModal";
 import { useSessionSummariesStore } from "./sessionreview/SessionSummaryStore";
 import * as d3 from "d3";
+import { combos, tricks } from "@prisma/client";
 const DataList = () => {
   // const { data: tricks } = useGetTricks();
   // const { data: combos } = useGetCombos();
   const { data: tricks } = trpc.trick.findAllwithComboClips.useQuery();
   const { data: combos } = trpc.combos.getAll.useQuery();
-  const { data: trickPoints, refetch } = useGetTrickPoints();
+  // const { data: trickPoints, refetch } = useGetTrickPoints();
   let trickMakerOpen = useSessionSummariesStore((s) => s.trickMakerOpen);
+  const [animPopup, toggleAnimPopup] = useState(false);
+  const [currentTrick, setCurrentTrick] = useState(null);
+  const { data: animations } = trpc.animations.findAll.useQuery();
+  console.log(animations);
+  const handleAnimPopup = (chosen: tricks | combos) => {
+    toggleAnimPopup((p) => !p);
+    setCurrentTrick(chosen);
+  };
+
   if (!combos) return <div>Getting Combos</div>;
   if (!tricks) return <div>Getting Tricks</div>;
-
   return (
     <div className="no-scrollbar flex max-h-[70vh] w-full flex-col place-items-center gap-2 overflow-y-scroll rounded-xl pb-14">
       <h1
@@ -41,7 +50,7 @@ const DataList = () => {
             });
           })
           ?.map((trick) => (
-            <DLTrickDisplay trick={trick} />
+            <DLTrickDisplay handleAnimPopup={handleAnimPopup} trick={trick} />
           ))}
       </div>
       <h1 className="sticky top-0 h-full w-full bg-zinc-800 p-2 text-center text-xl font-bold">
@@ -68,7 +77,10 @@ const DataList = () => {
                 {combo?.defaultAnimation ? (
                   <FaCheck className="text-emerald-500" />
                 ) : (
-                  <FaCircle className="text-red-700" />
+                  <FaCircle
+                    onClick={() => handleAnimPopup(combo)}
+                    className="text-red-700"
+                  />
                 )}
               </div>
               <p
@@ -89,6 +101,13 @@ const DataList = () => {
             </div>
           ))}
       </div>
+      {animPopup && (
+        <AnimPopup
+          toggle={toggleAnimPopup}
+          currentTrick={currentTrick}
+          animations={animations}
+        />
+      )}
       <DataListCommandBar />
       {trickMakerOpen ? <MakeNewTrickModal /> : null}
     </div>
@@ -97,7 +116,31 @@ const DataList = () => {
 
 export default DataList;
 
-const DLTrickDisplay = ({ trick }) => {
+const AnimPopup = ({ toggle, animations, currentTrick }) => {
+  return (
+    <div className="absolute top-10 left-10 z-[110] h-[80vh] w-[80vw] overflow-y-scroll bg-zinc-800 p-2 text-zinc-300">
+      <div
+        className="sticky top-0 z-[2] bg-zinc-800 font-black text-red-500 "
+        onClick={() => toggle(false)}
+      >
+        x
+      </div>
+      <h1 className={"sticky top-2 bg-zinc-800 p-2 text-2xl text-emerald-200"}>
+        {currentTrick.name}
+      </h1>
+      <div className={"h-full "}>
+        {animations &&
+          animations
+            .sort((a, b) => {
+              return a.animationName > b.animationName ? 1 : -1;
+            })
+            .map((a) => <div>{a.animationName}</div>)}
+      </div>
+    </div>
+  );
+};
+
+const DLTrickDisplay = ({ trick, handleAnimPopup }) => {
   let numOfClips = trick.combos
     .map((combo) => combo.Clips.length)
     .reduce((sum, b) => sum + b, 0);
@@ -131,7 +174,10 @@ const DLTrickDisplay = ({ trick }) => {
         {trick?.defaultAnimation ? (
           <FaCheck className="text-emerald-500" />
         ) : (
-          <FaCircle className="text-red-700" />
+          <FaCircle
+            onClick={() => handleAnimPopup(trick)}
+            className="text-red-700"
+          />
         )}
       </div>
       <p style={{ color: d3.interpolateRdYlGn(numOfClips / 10) }}>

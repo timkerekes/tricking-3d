@@ -20,12 +20,14 @@ import { sessionSummariesRoutes } from "./routes/sessionsummaries.routes.js";
 import { webhookRoutes } from "./routes/webhook.routes.js";
 import { paymentRoutes } from "./routes/payment.routes.js";
 import { getMLData } from "./controllers/sessionsummaries.controller.js";
-// import {
-// 	ClerkExpressRequireAuth,
-// 	ClerkExpressWithAuth,
-// } from "@clerk/clerk-sdk-node";
-// import { Clerk } from "@clerk/clerk-sdk-node";
-// const clerk = new Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
+import {
+	ClerkExpressRequireAuth,
+	ClerkExpressWithAuth,
+} from "@clerk/clerk-sdk-node";
+import { Clerk } from "@clerk/clerk-sdk-node";
+import { PrismaClient } from "@prisma/client";
+import { handleClerkEvents } from "./controllers/webhook.controller.js";
+const clerk = new Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
 const corsOptions = {
 	origin: [
 		"http://localhost:3000",
@@ -54,14 +56,17 @@ app.use((req, res, next) => {
 	);
 	next();
 });
-
 //Middlewares
 // app.use("/api/test", ClerkExpressRequireAuth(), async (req, res) => {
 // 	const testUser = await clerk.users.getUser(req.auth.userId);
 
-// 	console.log(testUser);
-// 	return res.json({ test: "information", "to see": "if it works" });
-// });
+const prismaclient = new PrismaClient();
+app.use("/api/test2", async (req, res) => {
+	console.log(req.body);
+	const users = await prismaclient.users.findMany();
+	return res.json(users);
+});
+app.use("/api/clerk", handleClerkEvents);
 app.use("/api/ml", getMLData);
 app.use("/api/checkout", paymentRoutes);
 app.get("/api/ablyAuth", ablyAuth);
@@ -72,9 +77,11 @@ app.use("/api/combo", comboRoutes);
 app.use("/api", userRoutes);
 app.use("/api/battlerooms", battleroomRoutes);
 app.use("/api/sessionsummaries", sessionSummariesRoutes);
-app.use("/api/tricklist", verifyJWT, tricklistRoutes);
-app.use("/api/loggedIn", verifyJWT, loginRoutes);
-app.use("/api/capture", verifyJWT, captureRoutes);
+app.use("/api/tricks", trickRoutes);
+app.use("/api/combo", comboRoutes);
+app.use("/api/tricklist", tricklistRoutes);
+app.use("/api/loggedIn", loginRoutes);
+app.use("/api/capture", captureRoutes);
 
 //Synchronizes with DB
 await db.sequelize.sync({ alter: false }).then(() => {
