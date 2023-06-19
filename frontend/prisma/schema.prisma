@@ -1,0 +1,468 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model account {
+  id                String  @id
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              user    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Account_userId_fkey")
+
+  @@unique([provider, providerAccountId], map: "Account_provider_providerAccountId_key")
+  @@index([userId], map: "Account_userId_fkey")
+}
+
+model animations {
+  animation_id  String  @id @db.Char(36)
+  animationName String? @db.VarChar(255)
+  skeleton      String? @db.VarChar(255)
+  fileName      String? @db.VarChar(255)
+  model         String? @db.VarChar(255)
+  tricks        tricks[]
+}
+
+model bases {
+  base_id       String   @id @db.VarChar(255)
+  trick_id      String?  @db.Char(36)
+  name          String?  @db.VarChar(255)
+  direction     String?  @db.VarChar(255)
+  fromLeg       String?  @db.VarChar(255)
+  toLeg         String?  @db.VarChar(255)
+  rotation      Int?
+  stance_id     String?  @db.VarChar(255)
+  takeoffStance String?  @db.VarChar(255)
+  landingStance String?  @db.VarChar(255)
+  pointValue    Float?   @db.Float
+  stances       stances? @relation(fields: [stance_id], references: [stance_id], onDelete: Restrict, onUpdate: Restrict, map: "bases_ibfk_1")
+  tricks        tricks[]
+
+  @@index([stance_id], map: "stance_id")
+}
+
+model battlerooms {
+  id        Int       @id @default(autoincrement())
+  host      String?   @db.Char(36)
+  sessionid String?   @unique(map: "sessionid") @db.Char(36)
+  team1     Json?
+  team2     Json?
+  judges    Json?
+  duration  Int?
+  isOpen    Boolean?
+  createdAt DateTime  @default(now()) @db.DateTime(0)
+  updatedAt DateTime  @db.DateTime(0)
+  deletedAt DateTime? @db.DateTime(0)
+}
+
+model battleroomstats {
+  id                 Int       @id @default(autoincrement())
+  sessionid          String?   @unique(map: "sessionid") @db.Char(36)
+  team1Score         Int?
+  team2Score         Int?
+  team1AudienceScore Int?
+  team2AudienceScore Int?
+  winner             Json?
+  audienceWinner     Json?
+  createdAt          DateTime  @default(now()) @db.DateTime(0)
+  updatedAt          DateTime  @db.DateTime(0)
+  deletedAt          DateTime? @db.DateTime(0)
+}
+
+model captures {
+  id                                Int       @id @default(autoincrement())
+  user_id                           Int?
+  captured_id                       Int?
+  createdAt                         DateTime? @default(now()) @db.DateTime(0)
+  updatedAt                         DateTime? @db.DateTime(0)
+  users_captures_user_idTousers     users?    @relation("captures_user_idTousers", fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "captures_ibfk_1")
+  users_captures_captured_idTousers users?    @relation("captures_captured_idTousers", fields: [captured_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "captures_ibfk_2")
+
+  @@index([captured_id], map: "captured_id")
+  @@index([user_id], map: "user_id")
+}
+
+model claimedcombos {
+  id        Int      @id @default(autoincrement())
+  user_id   String?  @db.Char(36)
+  combo_id  String?  @db.Char(36)
+  createdAt DateTime @default(now()) @db.DateTime(0)
+  updatedAt DateTime @db.DateTime(0)
+}
+
+model claimedtricks {
+  id        Int       @id @default(autoincrement())
+  user_id   String?   @db.Char(36)
+  trick_id  String?   @db.Char(36)
+  createdAt DateTime? @default(now()) @db.DateTime(0)
+  updatedAt DateTime? @db.DateTime(0)
+}
+
+model combo_animations {
+  id            Int      @id @default(autoincrement())
+  combo_id      String?  @db.Char(36)
+  animations_id String?  @db.Char(36)
+  createdAt     DateTime @default(now()) @db.DateTime(0)
+  updatedAt     DateTime @db.DateTime(0)
+}
+
+model combos {
+  combo_id         String   @id @db.Char(36)
+  name             String?  @db.VarChar(255)
+  type             String?  @default("Combo") @db.VarChar(255)
+  comboArray       Json?
+  creator          String?  @db.Char(36)
+  defaultAnimation String?  @db.Char(36)
+  createdAt        DateTime @default(now()) @db.DateTime(0)
+  updatedAt        DateTime @db.DateTime(0)
+  pointValue       Float?   @db.Float
+  shorthand        String?  @db.VarChar(255)
+  Clips sessiondata[]
+}
+
+model interactions {
+  id             Int       @id @default(autoincrement())
+  user_id        Int?
+  interaction_id String?   @db.Char(36)
+  trick_id       String?   @db.Char(36)
+  type           String?   @db.VarChar(255)
+  content        String?   @db.VarChar(255)
+  createdAt      DateTime? @default(now()) @db.DateTime(0)
+  updatedAt      DateTime? @db.DateTime(0)
+}
+
+model judgescores {
+  id        Int      @id @default(autoincrement())
+  sessionid String?  @db.Char(36)
+  judge     String?  @db.Char(36)
+  team      Json?
+  score     Int?
+  createdAt DateTime @default(now()) @db.DateTime(0)
+  updatedAt DateTime @db.DateTime(0)
+}
+
+model pointsledger {
+  id        Int      @id @default(autoincrement())
+  user_id   String?  @db.Char(36)
+  points    Float?   @db.Float
+  reason_id String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.DateTime(0)
+  updatedAt DateTime @db.DateTime(0)
+}
+
+model pointsledgers {
+  id        Int      @id @default(autoincrement())
+  user_id   String?  @db.Char(36)
+  points    Float?   @db.Float
+  reason_id String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.DateTime(0)
+  updatedAt DateTime @db.DateTime(0)
+}
+
+model profiles {
+  id        Int      @id @default(autoincrement())
+  user_id   String?  @db.Char(36)
+  name      String?  @db.VarChar(255)
+  status    String?  @db.VarChar(255)
+  socials   Json?
+  age       Int?
+  country   String?  @db.VarChar(255)
+  state     String?  @db.VarChar(255)
+  city      String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.DateTime(0)
+  updatedAt DateTime @db.DateTime(0)
+}
+
+model schema_migrations {
+  version     BigInt    @id
+  inserted_at DateTime? @db.DateTime(0)
+}
+
+model sequelizemeta {
+  name String @id @unique(map: "name") @db.VarChar(255)
+}
+
+model session {
+  id           String   @id
+  sessionToken String   @unique(map: "Session_sessionToken_key")
+  userId       String
+  expires      DateTime
+  user         user     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Session_userId_fkey")
+
+  @@index([userId], map: "Session_userId_fkey")
+}
+
+model sessiondata {
+  id               String   @id @db.Char(36)
+  srcid            String?  @db.Char(36)
+  sessionid        String?  @db.Char(36)
+  clipLabel        String?  @db.Char(36)
+  clipStart        Float?  
+  clipEnd          Float?  
+  admin            String?  @db.Char(36)
+  tricker_id          String?  @db.Char(36)
+  createdAt        DateTime @default(now()) @db.DateTime(0)
+  updatedAt        DateTime @default(now()) @db.DateTime(0)
+  bail             Int?
+  totalScore Float?   @default(0)
+  bonusScore Float?   @default(0)
+  executionAverage Float?   @default(0)
+  varietyScore Float?   @default(0)
+  powerScore Float?   @default(0)
+  comboTimestamps Json? 
+  chains Json? 
+  chainTotal Float?   @default(0)
+  chainMap Json? 
+  varietyMap Json? 
+  trickCount Json? 
+  tricker users? @relation(fields: [tricker_id],references: [uuid])
+  summary sessionsummaries? @relation(fields: [sessionid],references: [sessionid] )
+  ClipLabel combos? @relation(fields: [clipLabel],references: [combo_id])
+  SessionSource sessionsources? @relation(fields: [srcid],references: [srcid])
+  @@index([sessionid])
+
+}
+
+model sessiondatascores {
+  id             Int    @id @default(autoincrement())
+  sessiondataid  String @db.Char(36)
+  userid         String @db.Char(36)
+  executionScore Float
+  user           users  @relation(fields: [userid], references: [uuid])
+
+  @@unique([userid, sessiondataid], map: "userid:sessiondataid")
+}
+
+model sessionsources {
+  srcid     String   @id @db.Char(36)
+  sessionid String?  @db.Char(36)
+  vidsrc    String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.DateTime(0)
+  updatedAt DateTime @default(now()) @db.DateTime(0)
+  SessionSummary sessionsummaries? @relation(fields: [sessionid],references: [sessionid])
+  SessionData sessiondata[]
+  @@unique([sessionid, vidsrc], map: "vidsrckey")
+}
+
+model sessionsummaries {
+  sessionid   String          @id @db.Char(36)
+  name        String?         @db.VarChar(255)
+  user_id     String?         @db.Char(36)
+  admin       String?         @db.Char(36)
+  sessionDate String?         @db.VarChar(255)
+  startTime   String?         @db.VarChar(255)
+  endTime     String?         @db.VarChar(255)
+  status      String?         @db.VarChar(255)
+  createdAt   DateTime        @default(now()) @db.DateTime(0)
+  updatedAt   DateTime        @default(now()) @db.DateTime(0)
+  type        String?         @db.VarChar(255)
+  trickers    user_sessions[]
+  user users? @relation(fields: [user_id], references: [uuid])
+  SessionData sessiondata[]
+  SessionSources sessionsources[]
+  @@index([sessionid])
+}
+
+model user_sessions {
+  id             Int              @id @default(autoincrement())
+  user_id        String           @db.Char(36)
+  sessionid      String           @db.Char(36)
+  sessionsummary sessionsummaries @relation(fields: [sessionid], references: [sessionid])
+  user           users            @relation(fields: [user_id], references: [uuid])
+
+  @@index([sessionid], map: "user_sessions_sessionid_fkey")
+  @@index([user_id], map: "user_sessions_user_id_fkey")
+}
+
+model stances {
+  stance_id      String  @id @db.VarChar(255)
+  type           String? @default("Stance") @db.VarChar(255)
+  name           String? @db.VarChar(255)
+  leg            String? @db.VarChar(255)
+  direction      String? @db.VarChar(255)
+  stanceRotation Int?
+  pointValue     Float?  @db.Float
+  bases          bases[]
+}
+
+model transitions {
+  id             Int     @id @default(autoincrement())
+  name           String? @db.VarChar(255)
+  type           String? @default("Transition") @db.VarChar(255)
+  transitionType String? @db.VarChar(255)
+  takeoffStyle   String? @db.VarChar(255)
+  landingStyle   String? @db.VarChar(255)
+  fromLeg        String? @db.VarChar(255)
+  toLeg          String? @db.VarChar(255)
+  rotation       Int?
+  multiplier     Float?  @db.Float
+  pointValue     Float?  @db.Float
+}
+
+model trick_animations {
+  id           Int      @id @default(autoincrement())
+  trick_id     String?  @db.Char(36)
+  animation_id String?  @db.Char(36)
+  createdAt    DateTime @default(now()) @db.DateTime(0)
+  updatedAt    DateTime @db.DateTime(0)
+}
+
+model trick_variations {
+  id           Int        @id @default(autoincrement())
+  variation_id Int
+  trick_id     String?     @db.Char(36)
+  trick        tricks?     @relation(fields: [trick_id], references: [trick_id])
+  variation    variations @relation(fields: [variation_id], references: [id])
+
+  @@index([trick_id], map: "trick_variations_trick_id_fkey")
+  @@index([variation_id], map: "trick_variations_variation_id_fkey")
+}
+
+model tricklist_combos {
+  id           Int      @id @default(autoincrement())
+  tricklist_id String?  @db.Char(36)
+  combo_id     String?  @db.Char(36)
+  createdAt    DateTime @default(now()) @db.DateTime(0)
+  updatedAt    DateTime @db.DateTime(0)
+}
+
+model tricklists {
+  tricklist_id String   @id @db.Char(36)
+  name         String?  @db.VarChar(255)
+  owner        String?  @db.Char(36)
+  createdAt    DateTime @default(now()) @db.DateTime(0)
+  updatedAt    DateTime @db.DateTime(0)
+}
+
+model tricks {
+  trick_id         String             @id @db.Char(36)
+  base_id          String?            @db.VarChar(255)
+  trickType        String?            @db.VarChar(255)
+  type             String?            @default("Trick") @db.VarChar(255)
+  name             String?            @db.VarChar(255)
+  stance_id        String?            @db.VarChar(255)
+  takeoffStance    String?            @db.VarChar(255)
+  landingStance    String?            @db.VarChar(255)
+  defaultAnimation String?            @db.Char(36)
+  pointValue       Float?             @db.Float
+  animation        animations? @relation(fields: [defaultAnimation],references: [animation_id],onDelete: Restrict,onUpdate: Restrict,map: "default_animation")
+  variations       trick_variations[]
+  base             bases?             @relation(fields: [base_id], references: [base_id], onDelete: Restrict, onUpdate: Restrict, map: "tricks_ibfk_1")
+
+  @@index([base_id], map: "base_id")
+}
+model debates{
+  debateid     String      @id @db.Char(36) @default(uuid())
+  title        String      @db.VarChar(255) @unique
+  topic        String      @db.Text 
+  media        String?     @db.VarChar(255) 
+  mediaType    String?     @db.VarChar(7) 
+  verdict      String?     @db.VarChar(255) 
+  closed       Boolean?    
+  user_id      String      @db.Char(36)
+  createdAt    DateTime    @default(now()) @db.DateTime(0)
+  updatedAt    DateTime    @default(now()) @db.DateTime(0)
+  messages    debateMessages[]
+  host        users?       @relation(fields: [user_id],references: [uuid])
+}
+model debateMessages{
+  messageid    String     @id @db.Char(36)
+  debateid     String     @db.Char(36)
+  anonHash     String     @db.VarChar(255) 
+  message      String     @db.Text 
+  media        String?    @db.VarChar(255) 
+  mediaType    String?    @db.VarChar(7) 
+  vote         String     @db.VarChar(10)  
+  user_id      String     @db.Char(36)
+  createdAt    DateTime   @default(now()) @db.DateTime(0)
+  updatedAt    DateTime   @default(now()) @db.DateTime(0)
+  Debate debates? @relation(fields: [debateid],references:[debateid])
+  user        users? @relation(fields: [user_id],references: [uuid])
+}
+model user {
+  id            String    @id
+  name          String?
+  email         String?   @unique(map: "User_email_key")
+  emailVerified DateTime?
+  image         String?
+  account       account[]
+  session       session[]
+}
+
+model user_tricklists {
+  id           Int      @id @default(autoincrement())
+  user_id      String?  @db.Char(36)
+  tricklist_id String?  @db.Char(36)
+  createdAt    DateTime @default(now()) @db.DateTime(0)
+  updatedAt    DateTime @db.DateTime(0)
+}
+
+model users {
+  id                   Int                 @id @default(autoincrement())
+  username             String?             @unique(map: "username") @db.VarChar(255)
+  first_name           String?             @db.VarChar(255)
+  last_name            String?             @db.VarChar(255)
+  email                String?             @unique(map: "email") @db.VarChar(255)
+  password             String?             @db.VarChar(255)
+  refresh_token        String?             @db.VarChar(255)
+  uuid                 String?             @unique @db.Char(36) @default(uuid())
+  profilePic           String?             @db.VarChar(255)
+  createdAt            DateTime            @default(now()) @db.DateTime(0)
+  updatedAt            DateTime            @db.DateTime(0) @default(now())
+  deletedAt            DateTime?           @db.DateTime(0)
+  isAdmin              Boolean?
+  adminAccess          Int?
+  TotalPoints          Float?              @db.Float
+  SessionReviewCredits Int?
+  captures             captures[]          @relation("captures_user_idTousers")
+  captured_me          captures[]          @relation("captures_captured_idTousers")
+  executionScores      sessiondatascores[]
+  sessionSummaries     user_sessions[]
+  SessionSummaries     sessionsummaries[]
+  Clips sessiondata[]
+  Debates debates[]
+  Messages debateMessages[]
+
+  @@index([uuid])
+}
+
+model userscores {
+  id        Int      @id @default(autoincrement())
+  sessionid String?  @db.Char(36)
+  userid    String?  @db.Char(36)
+  team      Json?
+  score     Int?
+  createdAt DateTime @default(now()) @db.DateTime(0)
+  updatedAt DateTime @db.DateTime(0)
+}
+
+model variations {
+  id            Int                @id @default(autoincrement())
+  variationType String?            @db.VarChar(255)
+  type          String?            @default("Variation") @db.VarChar(255)
+  name          String?            @db.VarChar(255)
+  value         String?            @db.VarChar(255)
+  pos           String?            @db.VarChar(255)
+  pointValue    Float?             @db.Float
+  tricks        trick_variations[]
+}
+
+model verificationtoken {
+  identifier String
+  token      String   @unique(map: "VerificationToken_token_key")
+  expires    DateTime
+
+  @@unique([identifier, token], map: "VerificationToken_identifier_token_key")
+}

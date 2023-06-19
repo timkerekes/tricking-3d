@@ -5,7 +5,7 @@
   "private": true,
   "proxy": "http://localhost:3000",
   "prisma": {
-    "schema": "../prisma/schema.prisma"
+    "schema": "./prisma/schema.prisma"
   },
   "dependencies": {
     "@algolia/autocomplete-js": "^1.7.3",
@@ -28,6 +28,11 @@
     "@trpc/react-query": "^10.8.1",
     "@trpc/server": "^10.8.1",
     "@use-gesture/react": "^10.2.20",
+    "@prisma/client": "^4.8.1",
+    "ably": "^1.2.29",
+    "axios": "^0.27.2",
+    "react-player": "^2.11.0",
+    "uuid": "^9.0.0",
     "algoliasearch": "^4.14.2",
     "browserslist": "^4.21.4",
     "d3": "^7.7.0",
@@ -67,7 +72,6 @@
     "preinstall": "npx only-allow pnpm",
     "build": "next build",
     "dev": "next dev",
-    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
     "test": "jest --config ./jest.config.json"
